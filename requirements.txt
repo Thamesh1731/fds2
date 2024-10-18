@@ -16,3 +16,5 @@ PyPDF2
 pyresparser
 streamlit
 -e .
+sklearn
+thinc
