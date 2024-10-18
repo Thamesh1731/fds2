@@ -3,6 +3,13 @@ import os
 import numpy as np
 import pandas as pd
 import nltk
+
+# Ensure NLTK stopwords are downloaded
+try:
+    nltk.data.find('corpora/stopwords')
+except LookupError:
+    nltk.download('stopwords', quiet=True)
+
 from nltk.corpus import stopwords
 from ftfy import fix_text
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -10,8 +17,7 @@ from sklearn.neighbors import NearestNeighbors
 from pyresparser import ResumeParser
 import src.notebook.skills_extraction as skills_extraction
 
-# Ensure NLTK stopwords are downloaded
-nltk.download('stopwords', quiet=True)
+# Set stopwords
 stopw = set(stopwords.words('english'))
 
 # Load dataset
