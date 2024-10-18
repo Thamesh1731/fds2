@@ -1,45 +1,54 @@
 import streamlit as st
 import pandas as pd
 import PyPDF2
-from pyresparser import ResumeParser
+from io import BytesIO
 from sklearn.neighbors import NearestNeighbors
-from src.components.job_recommender import ngrams,getNearestN,jd_df
-import src.notebook.skills_extraction as skills_extraction
 from sklearn.feature_extraction.text import TfidfVectorizer
+from src.components.job_recommender import ngrams, getNearestN, jd_df
+import src.notebook.skills_extraction as skills_extraction
+import nltk
 
+# Download NLTK stopwords
+nltk.download('stopwords')
+
+# Function to extract text from uploaded PDF
+def extract_text_from_pdf(uploaded_file):
+    pdf_reader = PyPDF2.PdfReader(uploaded_file)
+    text = ''
+    for page in range(len(pdf_reader.pages)):
+        text += pdf_reader.pages[page].extract_text()
+    return text
 
 # Function to process the resume and recommend jobs
-def process_resume(file_path):
+def process_resume(file):
     # Extract text from PDF resume
-    resume_skills=skills_extraction.skills_extractor(file_path)
+    resume_text = extract_text_from_pdf(file)
+    resume_skills = skills_extraction.skills_extractor(resume_text)
 
-    # Perform job recommendation based on parsed resume data
-    skills=[]
-    skills.append(' '.join(word for word in resume_skills))
+    # Convert skills to a single string
+    skills = [' '.join(word for word in resume_skills)]
     
-    
-    # Feature Engineering:
+    # Feature Engineering using TF-IDF
     vectorizer = TfidfVectorizer(min_df=1, analyzer=ngrams, lowercase=False)
     tfidf = vectorizer.fit_transform(skills)
 
-    
+    # Fit the model for job matching
     nbrs = NearestNeighbors(n_neighbors=1, n_jobs=-1).fit(tfidf)
     jd_test = (jd_df['Processed_JD'].values.astype('U'))
 
+    # Get nearest job recommendations
     distances, indices = getNearestN(jd_test)
-    test = list(jd_test) 
+    test = list(jd_test)
     matches = []
 
-    for i,j in enumerate(indices):
-        dist=round(distances[i][0],2)
-        temp = [dist]
-        matches.append(temp)
-    
+    for i, j in enumerate(indices):
+        dist = round(distances[i][0], 2)
+        matches.append([dist])
+
     matches = pd.DataFrame(matches, columns=['Match confidence'])
 
-    # Following recommends Top 5 Jobs based on candidate resume:
-    jd_df['match']=matches['Match confidence']
-    
+    # Recommend Top 5 Jobs based on candidate resume
+    jd_df['match'] = matches['Match confidence']
     return jd_df.head(5).sort_values('match')
 
 # Streamlit app
@@ -52,12 +61,11 @@ def main():
 
     if uploaded_file is not None:
         # Process resume and recommend jobs
-        file_path=uploaded_file.name
-        df_jobs = process_resume(file_path)
+        df_jobs = process_resume(uploaded_file)
 
         # Display recommended jobs as DataFrame
         st.write("Recommended Jobs:")
-        st.dataframe(df_jobs[['Job Title','Company Name','Location','Industry','Sector','Average Salary']])
+        st.dataframe(df_jobs[['Job Title', 'Company Name', 'Location', 'Industry', 'Sector', 'Average Salary']])
 
 # Run the Streamlit app
 if __name__ == '__main__':
