@@ -1,20 +1,18 @@
-pandas 
-numpy 
+streamlit
+pandas
+numpy
 seaborn
 matplotlib
 selenium
 tqdm
-bs4
+beautifulsoup4
 regex
-docx
+python-docx
 nltk
 spacy
-python-docx
-scikit-learn
+thinc
+scikit-learn  # Changed this line
 ftfy
 PyPDF2
 pyresparser
-streamlit
-sklearn
-thinc
 
